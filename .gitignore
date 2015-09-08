@@ -1,3 +1,4 @@
+.idea/
 bin/
 obj/
 Debug/
@@ -5,3 +6,4 @@ Release/
 *.suo
 *.exe
 *.userprefs
+.DS_Store
