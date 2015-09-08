@@ -1,6 +1,5 @@
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     try {
-        console.log(sender.tab.id);
         //chrome.pageAction.show(sender.tab.id);
         sendResponse();
     }
@@ -12,14 +11,20 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.say) {
         //console.debug('sender.tab', sender.tab);
-        chrome.tts.speak('Number '+ sender.tab.index +' '+ request.say, {
+        chrome.tts.speak(['Number', sender.tab.index, request.say].join(' '), {
             voiceName: 'Google US English', enqueue: !true, rate: 1.5
         });
     }
 });
 
 var context = new AudioContext(),
-    masterVolume = context.createGain();
+    masterVolume = context.createGain(),
+    mutationWaveMap = {
+        attributes: {wave: 'sine', frequency: 1000, duration: 0.02},
+        childList: {wave: 'sine', frequency: 100, duration: 0.05},
+        characterData: {wave: 'square', frequency: 8000, duration: 0.3},
+        default: {wave: 'triangle', frequency: 8000, duration: 0.5}
+    };
 masterVolume.gain.value = 0.1;
 masterVolume.connect(context.destination);
 
@@ -28,28 +33,19 @@ masterVolume.connect(context.destination);
  * https://developer.mozilla.org/en-US/docs/Web/API/OscillatorNode/type
  */
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if (request.type === 'MutationObserver') {
+    if ('MutationObserver' === request.type) {
         var osc = context.createOscillator();
         osc.connect(masterVolume);
 
-        switch (request.data.type) {
-            case 'attributes':
-                osc.type = 'square';
-                break;
-            case 'characterData':
-                osc.type = 'sawtooth';
-                break;
-            case 'childList':
-                osc.type = 'triangle';
-                break;
-            default:
-                osc.type = 'sine';
-                break;
-        }
+        var effect = (mutationWaveMap[request.data.type] || mutationWaveMap.default);
+        osc.type = effect.wave;
+        osc.frequency.value = effect.frequency;
+        osc.detune.value = window.parseInt(10*Math.random());
 
-        //osc.detune.value = 10;
+        console.debug('effect', effect);
+
         osc.start(context.currentTime);
-        osc.stop(context.currentTime + 0.05);
+        osc.stop(context.currentTime +0.05);
     }
 });
 
