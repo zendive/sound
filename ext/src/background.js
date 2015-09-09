@@ -1,6 +1,6 @@
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     try {
-        //chrome.pageAction.show(sender.tab.id);
+        chrome.pageAction.show(sender.tab.id);
         sendResponse();
     }
     catch (bug) {
@@ -45,7 +45,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         console.debug('effect', effect);
 
         osc.start(context.currentTime);
-        osc.stop(context.currentTime +0.05);
+        osc.stop(context.currentTime + 0.05);
     }
 });
 
