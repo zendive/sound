@@ -11,7 +11,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.say) {
         //console.debug('sender.tab', sender.tab);
-        chrome.tts.speak(['Number', sender.tab.index, request.say].join(' '), {
+        chrome.tts.speak([sender.tab.index, request.say].join(' '), {
             voiceName: 'Google US English', enqueue: !true, rate: 1.5
         });
     }
@@ -22,30 +22,29 @@ var context = new AudioContext(),
     stopTime = null,
     mutationWaveMap = {
         attributes: {wave: 'sine', frequency: 1000, duration: 0.02},
-        childList: {wave: 'sine', frequency: 100, duration: 0.05},
-        characterData: {wave: 'square', frequency: 8000, duration: 0.3},
-        default: {wave: 'triangle', frequency: 8000, duration: 0.5}
+        childList: {wave: 'sine', frequency: 540, duration: 0.06},
+        characterData: {wave: 'square', frequency: 5000, duration: 0.1},
+        _default: {wave: 'triangle', frequency: 8000, duration: 0.5}
     };
 masterVolume.gain.value = 0.1;
 masterVolume.connect(context.destination);
 
 function mutationObserverHandler (request, sender, sendResponse) {
     var ct = context.currentTime;
-
     if (ct < stopTime) {
         return;
     }
 
-    var osc = context.createOscillator();
+    var effect = (mutationWaveMap[request.data.type] || mutationWaveMap._default),
+        osc = context.createOscillator();
+    //*DBG*/console.debug('effect', effect);
+
     osc.connect(masterVolume);
-
-    var effect = (mutationWaveMap[request.data.type] || mutationWaveMap.default);
     osc.type = effect.wave;
-    osc.frequency.value = effect.frequency;
-    osc.detune.value = window.parseInt(10*Math.random());
+    var frequencyShiftMagnitude = 25 * (effect.frequency/100);
+    var frequencyShift = window.parseInt(frequencyShiftMagnitude * Math.random());
+    osc.frequency.value = effect.frequency + frequencyShift;
     stopTime = ct + effect.duration;
-
-    console.debug('effect', effect);
 
     osc.start(ct);
     osc.stop(stopTime);
