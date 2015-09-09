@@ -45,7 +45,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         console.debug('effect', effect);
 
         osc.start(context.currentTime);
-        osc.stop(context.currentTime + 0.05);
+        osc.stop(context.currentTime + effect.duration);
     }
 });
 
